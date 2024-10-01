@@ -1,8 +1,12 @@
 const passport = require("../../config/passport")
 const router = require("express").Router();
 const {createHotel, updateHotel, deleteHotel, getAllHotelsOfOwner, getAllHotel, searchHotelByLocation} = require("../controller/createHotel")
-
-router.post("/hotel-owner/add-hotel", passport.authenticate('jwt', { session: false }), createHotel)
+const { upload } = require("../../config/cloudinaryConfig")  // Multer upload middleware
+router.post(
+    "/hotel-owner/add-hotel", 
+    passport.authenticate('jwt', { session: false }),
+    upload.array("images", 7),
+    createHotel)
 
 router.put("/hotel-owner/update-hotel/:hotelId", passport.authenticate('jwt', {session: false}), updateHotel)
 

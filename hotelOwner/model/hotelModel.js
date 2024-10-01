@@ -6,8 +6,8 @@ const hotelOwnerSchema = new mongoose.Schema({
     hotelDescription: { type: String, required: true },
     keyPoints: [{ type: Map, of: String }],
     city: { type: String, required: true },
-    state: { type: String, required: true },
-    country: { type: String, required: true },
+    // state: { type: String, required: true },
+    // country: { type: String, required: true },
     ownerContact: { type: String, required: true },
     bookingContact: { type: String, required: true },
     numberOfRooms: { type: Number, required: true },
@@ -15,7 +15,7 @@ const hotelOwnerSchema = new mongoose.Schema({
     hotelAddress: { type: String, required: true },
     pincode: { type: Number, required: true },
     // diningHall: { type: String, required: true },
-    image: [{ type: String }],
+    images: [{ type: String }],
 })
 
 module.exports = mongoose.model("HotelOwner", hotelOwnerSchema)
