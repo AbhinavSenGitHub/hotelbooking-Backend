@@ -1,16 +1,14 @@
 const { cloudinary, uploadImageToCloudinary } = require("../../config/cloudinaryConfig")
 const hotelModel = require("../model/hotelModel")
+const citiesModel = require("../model/citiesModel")
 const multer = require('multer');
-
-// const storage = multer.memoryStorage(); // Store files in memory temporarily
-// const upload = multer({ storage });
 
 module.exports = {
     createHotel: async (req, res) => {
         try {
             const { keyPoints, ...otherHotelData } = req.body;
             console.log(req.user)
-            console.log(keyPoints, otherHotelData);
+            console.log("hotel datqa ", keyPoints, otherHotelData);
             console.log(req.files);
             // If there are image files in the request, upload them to Cloudinary
             let imageUploadPromises = [];
@@ -43,73 +41,11 @@ module.exports = {
             // Save new hotel (Mongoose model)
             await newHotel.save()
 
-            res.status(200).json({ success: true });
+            res.status(200).json({ success: true, data: newHotel._id });
         } catch (error) {
             console.error('Error adding hotel:', error);
             res.status(500).json({ success: false, message: error.message });
         }
-
-        // console.log("user.id ", req.user)
-
-        // console.log("req.body", req.files)
-        // try {
-
-        //     // upload image to cloudinary
-
-        //     const imageFiles = req.files; // Access uploaded files
-        //     console.log("imageurl: ", imageUrls);
-
-        //     const imageUrls = await Promise.all(
-        //         imageFiles.map(file => {
-        //             return new Promise((resolve, reject) => {
-        //                 const stream = cloudinary.uploader.upload_stream((error, result) => {
-        //                     if (error) {
-        //                         return reject(error);
-        //                     }
-        //                     resolve(result.secure_url);
-        //                 });
-        //                 stream.end(file.buffer);
-        //             });
-        //         })
-        //     );
-
-        //     console.log("imageurl: ", imageUrls);
-
-        //     const hotelData = new hotelModel({
-        //         owner: req.user._id,
-        //         hotelName: req.body.hotelName,
-        //         hotelDescription: req.body.hotelDescription,
-        //         city: req.body.city,
-        //         state: req.body.state,
-        //         country: req.body.country,
-        //         keyPoints: req.body.keyPoints || [],
-        //         ownerContact: req.body.ownerContact,
-        //         bookingContact: req.body.bookingContact,
-        //         numberOfRooms: req.body.numberOfRooms,
-        //         additionEmail: req.body.additionEmail,
-        //         hotelAddress: req.body.hotelAddress,
-        //         pincode: req.body.pincode,
-        //         // images: imageUrls,          // Array of Cloudinary URLs
-        //         // diningHall: req.body.diningHall,
-        //     })
-        //     await hotelData.save();
-        //     req.session.hotelId = hotelData._id;
-        //     console.log("req.session.hotelId:- ", req.session.hotelId)
-        //     console.log("req.session:- ", req.session)
-
-        //     req.session.save(err => {
-        //         if (err) {
-        //             console.log("Session save error: ", err)
-        //             return res.status(500).json({ success: false, message: "Failed to save the session." })
-        //         }
-        //     })
-
-        //     console.log("req.session after saving hotelId: ", req.session.hotelId)
-        //     return res.status(201).json({ status: 201, success: true, message: "Hotel details saved successfully", hotelId: hotelData._id })
-        // } catch (error) {
-        //     console.error("Error in saving the hotel", error)
-        //     return res.status(500).json({ status: 500, success: false, message: "Internal server error" })
-        // }
     },
 
     updateHotel: async (req, res) => {
@@ -226,6 +162,22 @@ module.exports = {
         } catch (error) {
             console.error(error)
             return res.status(500).json({ status: 500, success: false, message: "Internal Server Error" })
+        }
+    },
+
+    getAllLocation: async (req, res) => {
+        try {
+            const response = await citiesModel.find()
+            if(!response){
+                console.log("cities response", response)
+                return res.status(404).json({ status: 404, success: false, message: "No city found" })
+            }
+
+            return res.status(200).json({ status: 200, success: true, data: response})
+
+
+        }catch (error) {
+
         }
     }
 }

@@ -1,8 +1,8 @@
-const mongoose = requrie("mongoose")
+const mongoose = require("mongoose")
 
 const citySchema = new mongoose.Schema({
     name: { type: String },
     state: { type: String }
 })
 
-exports.City = mongoose.module("City", citySchema)
+module.exports = mongoose.model("City", citySchema)

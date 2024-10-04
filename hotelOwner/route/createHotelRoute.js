@@ -1,6 +1,6 @@
 const passport = require("../../config/passport")
 const router = require("express").Router();
-const {createHotel, updateHotel, deleteHotel, getAllHotelsOfOwner, getAllHotel, searchHotelByLocation} = require("../controller/createHotel")
+const {createHotel, updateHotel, deleteHotel, getAllHotelsOfOwner, getAllHotel, searchHotelByLocation, getAllLocation} = require("../controller/createHotel")
 const { upload } = require("../../config/cloudinaryConfig")  // Multer upload middleware
 router.post(
     "/hotel-owner/add-hotel", 
@@ -18,4 +18,5 @@ router.get("/getall-hotel", getAllHotel)
 
 router.get("/hotel-by-location", searchHotelByLocation)
 
+router.get("/all-location", getAllLocation)
 module.exports = router

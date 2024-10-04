@@ -1,8 +1,8 @@
 const mongoose = require("mongoose")
  
 const roomSchema = new mongoose.Schema({
-    roomId: { type: String, required: true, unique: true },
-    roomHotel_Id: { type: mongoose.Schema.Types.ObjectId, ref: "hotelModel", required: true},
+    roomId: { type: String,  unique: true },
+    roomHotel_Id: { type: mongoose.Schema.Types.ObjectId, ref: "hotelModel"},
     roomOwner_Id: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // Referencing the customer who booked the room
     roomNumber: { type: String, required: true },
     isBooked: { type: Boolean, default: false },

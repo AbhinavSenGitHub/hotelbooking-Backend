@@ -1,36 +1,48 @@
 const roomModel = require("../model/roomModel")
+const { cloudinary, uploadImageToCloudinary } = require("../../config/cloudinaryConfig")
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
 module.exports = {
     createRoom: async (req, res) => {
-        try {
 
-            const roomId = uuidv4();
-            const roomData = new roomModel({
-                roomNumber: req.body.roomNumber,
-                roomId: roomId,
-                roomHotel_Id: req.body.roomHotel_Id,
-                roomOwner_Id: req.body.roomOwner_Id || null, // Optional, can be null  
-                isBooked: req.body.isBooked || false, // Default to false if not provided  
-                roomImages: req.body.roomImages || [], // Default to empty array if not provided  
-                floorNumber: req.body.floorNumber,
-                numberOfBed: req.body.numberOfBed,
-                price: req.body.price,
-                capacity: req.body.capacity,
-                bathRoom: req.body.bathRoom,
-                description: req.body.description,
-                amenities: req.body.amenities || [], // Default to empty array if not provided  
-                availabilityDates: req.body.availabilityDates || [] // Default to empty array if not provided  
-            });
-            console.log(roomData)
-            await roomData.save()
-            res.status(201).json({
-                status: 201,
-                message: 'Room created successfully',
-            });
-        } catch (error) {
-            console.error("Error in making the port request", error)
-            return res.status(500).json({ status: 500, success: false, message: "Internal Server Error" })
-        }
+            try {
+                const { keyPoints, ...otherRoomData } = req.body;
+                
+                console.log("room datqa ", keyPoints, otherRoomData);
+                console.log(req.files);
+                
+                let imageUploadPromises = [];
+                if (req.files && req.files.length > 0) {
+                    imageUploadPromises = req.files.map((file) => {
+                        console.log(file.buffer)
+                        return uploadImageToCloudinary(file.buffer);
+                    })
+                }
+                console.log("imageUploadPromises url :- ", imageUploadPromises)
+                let imageUrls = []
+                try {
+                    imageUrls = await Promise.all(imageUploadPromises);  
+                    console.log("Uploaded Image URLs: ", imageUrls); 
+                } catch (error) {
+                    console.error("Error uploading images: ", error);
+                }
+                console.log(" Image URLs: ", imageUrls); 
+    
+                // Create the new hotel object
+                const newRoom = new roomModel({
+                    ...otherRoomData,
+                    keyPoints: JSON.parse(keyPoints),
+                    roomImages: imageUrls, // Store the uploaded image URLs
+                })
+    
+                console.log("newRoom data", newRoom)
+                await newRoom.save()
+    
+                res.status(200).json({ success: true });
+            } catch (error) {
+                console.error('Error adding room:', error);
+                res.status(500).json({ success: false, message: error.message });
+            }
     },
 
     getRoomsById: async (req, res) => {

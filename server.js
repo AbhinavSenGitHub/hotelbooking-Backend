@@ -42,7 +42,7 @@ const userRouter = require("./auth/routes/userRouter")
 
 // hotel owner route
 const createHotelRoute = require("./hotelOwner/route/createHotelRoute")
-const roomRoute = require("./hotelOwner/route/roomRoute")
+const roomRoute = require("./room/route/roomRoute")
 
 // customer route
 const customer = require("./customer/route/bookingRoomRoute")
