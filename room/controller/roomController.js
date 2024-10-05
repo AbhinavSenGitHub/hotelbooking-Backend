@@ -5,44 +5,44 @@ const multer = require('multer');
 module.exports = {
     createRoom: async (req, res) => {
 
-            try {
-                const { keyPoints, ...otherRoomData } = req.body;
-                
-                console.log("room datqa ", keyPoints, otherRoomData);
-                console.log(req.files);
-                
-                let imageUploadPromises = [];
-                if (req.files && req.files.length > 0) {
-                    imageUploadPromises = req.files.map((file) => {
-                        console.log(file.buffer)
-                        return uploadImageToCloudinary(file.buffer);
-                    })
-                }
-                console.log("imageUploadPromises url :- ", imageUploadPromises)
-                let imageUrls = []
-                try {
-                    imageUrls = await Promise.all(imageUploadPromises);  
-                    console.log("Uploaded Image URLs: ", imageUrls); 
-                } catch (error) {
-                    console.error("Error uploading images: ", error);
-                }
-                console.log(" Image URLs: ", imageUrls); 
-    
-                // Create the new hotel object
-                const newRoom = new roomModel({
-                    ...otherRoomData,
-                    keyPoints: JSON.parse(keyPoints),
-                    roomImages: imageUrls, // Store the uploaded image URLs
+        try {
+            const { keyPoints, ...otherRoomData } = req.body;
+
+            console.log("room datqa ", keyPoints, otherRoomData);
+            console.log(req.files);
+
+            let imageUploadPromises = [];
+            if (req.files && req.files.length > 0) {
+                imageUploadPromises = req.files.map((file) => {
+                    console.log(file.buffer)
+                    return uploadImageToCloudinary(file.buffer);
                 })
-    
-                console.log("newRoom data", newRoom)
-                await newRoom.save()
-    
-                res.status(200).json({ success: true });
-            } catch (error) {
-                console.error('Error adding room:', error);
-                res.status(500).json({ success: false, message: error.message });
             }
+            console.log("imageUploadPromises url :- ", imageUploadPromises)
+            let imageUrls = []
+            try {
+                imageUrls = await Promise.all(imageUploadPromises);
+                console.log("Uploaded Image URLs: ", imageUrls);
+            } catch (error) {
+                console.error("Error uploading images: ", error);
+            }
+            console.log(" Image URLs: ", imageUrls);
+
+            // Create the new hotel object
+            const newRoom = new roomModel({
+                ...otherRoomData,
+                keyPoints: JSON.parse(keyPoints),
+                roomImages: imageUrls, // Store the uploaded image URLs
+            })
+
+            console.log("newRoom data", newRoom)
+            await newRoom.save()
+
+            res.status(200).json({ success: true });
+        } catch (error) {
+            console.error('Error adding room:', error);
+            res.status(500).json({ success: false, message: error.message });
+        }
     },
 
     getRoomsById: async (req, res) => {
@@ -115,15 +115,54 @@ module.exports = {
     },
 
     getAllRoom: async (req, res) => {
+        
         try {
-            const response = await roomModel.find()
-
-            if (!response) {
-                return res.status(404).json({ status: 404, success: false, message: "Room not found" })
-            }
-            return res.status(200).json({ status: 200, success: true, message: "All room fetched successfully", response: response });
-        } catch (error) {
-            return res.status(404).json({ status: 500, success: false, message: "Internal server error" });
+            const rooms = await roomModel.aggregate([
+                {
+                    $lookup: {
+                        from: 'hotelowners',
+                        localField: 'roomHotel_Id',
+                        foreignField: '_id',
+                        as: 'hotelDetails'
+                    }
+                },
+                { $unwind: '$hotelDetails' },
+                {
+                    $project: {
+                        _id: 1,
+                        roomNumber: 1,
+                        isBooked: 1,
+                        roomImages: 1,
+                        floorNumber: 1,
+                        numberOfBed: 1,
+                        price: 1,
+                        capacity: 1,
+                        bathRoom: 1,
+                        'hotelDetails.hotelName': 1, // Get hotel name
+                        'hotelDetails.hotelAddress': 1,
+                        'hotelDetails.city': 1,
+                        'hotelDetails.bookingContact': 1,
+                    }
+                }
+            ])
+            console.log("rooms:- ", rooms)
+            res.status(200).json({ rooms });
+        } catch (err) {
+            res.status(500).json({ error: err.message });
         }
+
+
+
+
+        // try {
+        //     const response = await roomModel.find()
+
+        //     if (!response) {
+        //         return res.status(404).json({ status: 404, success: false, message: "Room not found" })
+        //     }
+        //     return res.status(200).json({ status: 200, success: true, message: "All room fetched successfully", response: response });
+        // } catch (error) {
+        //     return res.status(404).json({ status: 500, success: false, message: "Internal server error" });
+        // }
     }
 }

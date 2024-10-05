@@ -1,7 +1,7 @@
 const mongoose = require("mongoose")
 
 const hotelOwnerSchema = new mongoose.Schema({
-    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },   // Referencing the user as the owner
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },   // Referencing the user as the owner
     hotelName: { type: String, required: true },
     hotelDescription: { type: String, required: true },
     keyPoints: [{ type: Map, of: String }],
@@ -18,4 +18,4 @@ const hotelOwnerSchema = new mongoose.Schema({
     images: [{ type: String }],
 })
 
-module.exports = mongoose.model("HotelOwner", hotelOwnerSchema)
+module.exports = mongoose.model("hotelowners", hotelOwnerSchema) 

@@ -11,6 +11,6 @@ router.put("/hotel-owner/update-room/:roomId", passport.authenticate('jwt', { se
 
 router.delete("/hotel-owner/delete-room/:roomId", passport.authenticate('jwt', { session: false }), deleteRoom)
 
-router.get("/hotel-owner/getall-room", passport.authenticate('jwt', { session: false }), getAllRoom)
+router.get("/hotel-owner/getall-room", getAllRoom)
 
-module.exports = router
+module.exports = router 
