@@ -5,6 +5,7 @@ const router = require("express").Router()
 // request
 router.post('/auth/signup', userController.signupUser)
 router.post('/auth/login', userController.loginUser)
+router.get('/auth/cookies', userController.fetchCookies)
 
 // google authentication 
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile'] }))

@@ -17,12 +17,13 @@ module.exports = {
             
             if(response.success){
                 console.log("response in the cookie", response)
-                res.cookie("authCookies", response.token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 })
+                res.cookie("authCookies", response, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 })
                 return res.json({
                     status: response.status,
                     success: response.success,
                     message: response.message,
                     token: response.token,
+                    severity: response.severity,
                     userData: {
                         username: userData.username,
                         email: userData.email,
@@ -33,7 +34,8 @@ module.exports = {
                 return res.json({
                     status: response.status,
                     success: response.success,
-                    message: response.message
+                    message: response.message,
+                    severity: response.severity
                 })
             }
 
@@ -59,6 +61,7 @@ module.exports = {
                     success: response.success,
                     message: response.message,
                     token: response.token,
+                    severity: response.severity,
                     userData: {
                         username: response.userData.username,
                         email: response.userData.email,
@@ -72,12 +75,37 @@ module.exports = {
                     status: response.status,
                     success: response.success,
                     message: response.message,
-                    token: response.token
+                    token: response.token,
+                    severity: response.severity
                 })
             }
         }catch(error) {
             console.log("Error in sending request to backend")
             next(error)
+        }
+    },
+
+    fetchCookies : async (req, res) => {
+        const authCookies = req.cookies.authCookies
+
+        console.log("fetching cookies", authCookies)
+
+        if(authCookies){
+            return res.status(200).json({
+                status: 200,
+                success: true,
+                message: "Cookie found",
+                authCookies: authCookies,
+                severity: "success",
+            })
+        }else{
+            return res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Cookie not found",
+                authCookies: authCookies,
+                severity: "error",
+            })
         }
     }
 

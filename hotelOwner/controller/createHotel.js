@@ -41,10 +41,10 @@ module.exports = {
             // Save new hotel (Mongoose model)
             await newHotel.save()
 
-            res.status(200).json({ success: true, data: newHotel._id });
+            res.status(200).json({ success: true, data: newHotel._id, message: "Hotel added successfully", severity: "success" });
         } catch (error) {
             console.error('Error adding hotel:', error);
-            res.status(500).json({ success: false, message: error.message });
+            res.status(500).json({ success: false, message: "error in adding hotel to your profile", severity: "error" });
         }
     },
 

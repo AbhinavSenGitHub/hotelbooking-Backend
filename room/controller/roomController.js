@@ -38,10 +38,10 @@ module.exports = {
             console.log("newRoom data", newRoom)
             await newRoom.save()
 
-            res.status(200).json({ success: true });
+            res.status(200).json({ success: true, message: "Room added to your hotel successfully", severity: "success"});
         } catch (error) {
             console.error('Error adding room:', error);
-            res.status(500).json({ success: false, message: error.message });
+            res.status(500).json({ success: false, message: "Error in adding room to your hotel.", severity: "error" });
         }
     },
 
@@ -135,6 +135,8 @@ module.exports = {
                         roomImages: 1,
                         floorNumber: 1,
                         numberOfBed: 1,
+                        description: 1,
+                        keyPoints: 1,
                         price: 1,
                         capacity: 1,
                         bathRoom: 1,
@@ -150,19 +152,5 @@ module.exports = {
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
-
-
-
-
-        // try {
-        //     const response = await roomModel.find()
-
-        //     if (!response) {
-        //         return res.status(404).json({ status: 404, success: false, message: "Room not found" })
-        //     }
-        //     return res.status(200).json({ status: 200, success: true, message: "All room fetched successfully", response: response });
-        // } catch (error) {
-        //     return res.status(404).json({ status: 500, success: false, message: "Internal server error" });
-        // }
     }
 }

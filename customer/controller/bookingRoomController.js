@@ -29,6 +29,8 @@ module.exports = {
                 roomId: req.body.roomId,
                 checkinDate: checkinDate,
                 checkoutDate: checkoutDate,
+                checkinTime: req.body.checkinTime,
+                checkoutTime: req.body.checkoutTime,
                 numberOfGuests: req.body.numberOfGuests,
                 nextAvailability: nextAvailabilityDate,
                 totalAmount: req.body.totalAmount,
