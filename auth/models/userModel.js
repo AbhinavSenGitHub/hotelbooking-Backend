@@ -1,10 +1,31 @@
 const mongoose = require("mongoose")
 const bcrypt = require("bcryptjs")
 const userSchema = new mongoose.Schema({
-    username: { type: String, required: true},
-    email: {type: String, required: true},
-    password: { type: String, required: true},
-    userType: { type: String, enum:['customer', 'hotelOwner'], required: true},
+    username: { 
+        type: String, 
+        required: false // Set to false, will validate inside pre-save middleware
+    },
+    email: { 
+        type: String, 
+        unique: true, 
+        required: false // Set to false, will validate inside pre-save middleware
+    },
+    password: { 
+        type: String, 
+        required: false // Set to false, will validate inside pre-save middleware
+    },
+    userType: { 
+        type: String, 
+        enum: ['customer', 'hotelOwner'],
+        required: false // Set to false, will validate inside pre-save middleware
+    },
+    googleId: {
+        type: String, // For Google OAuth
+        required: false
+    },
+    isVerified: { type: Boolean, default: false },
+    otp: { type: String },
+    otpExpiresAt: { type: Date }
 })
 
 userSchema.pre('save', async function (next) {

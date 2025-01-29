@@ -1,14 +1,22 @@
+const mixedAuth = require("../../config/googlePassport")
 const passport = require("../../config/passport")
-const { bookingRoom, fetchAllBookingByCustomerId, updateByBookingId, cancelBooking } = require("../controller/bookingRoomController")
+const { bookingRoom, fetchAllBookingByCustomerId, updateByBookingId, cancelBooking, searchRooms, bookingRooms, finalizeBooking } = require("../controller/bookingRoomController")
 
 const router = require("express").Router()
 
-router.post("/customer/booking", passport.authenticate("jwt", {session: false}), bookingRoom)
+router.post("/customer/booking", mixedAuth, bookingRoom)
 
-router.get("/customer/booking/:customerId", passport.authenticate("jwt", {session: false}), fetchAllBookingByCustomerId)
+router.post("/create-checkout-session", mixedAuth, bookingRooms)
+router.post("/finalize-booking", mixedAuth, finalizeBooking)
 
-router.patch("/customer/booking/update/:bookingId", passport.authenticate("jwt", {session: false}), updateByBookingId)
+router.get("/customer/booking/", mixedAuth, fetchAllBookingByCustomerId)
 
-router.patch("/customer/booking/update/:bookingId/cancel", passport.authenticate("jwt", {session: false}), cancelBooking)
+router.patch("/customer/booking/update/:bookingId", mixedAuth, updateByBookingId)
+
+router.patch("/customer/booking/update/:bookingId/cancel", mixedAuth, cancelBooking)
+
+router.get("/search-rooms/:location/:checkIn/:checkOut", searchRooms)
 
 module.exports = router
+
+// passport.authenticate("jwt", {session: false})

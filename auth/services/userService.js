@@ -17,7 +17,8 @@ module.exports = {
                 return { status: 201, success: true, token: token, message: "User signup successfully", severity:"success",  userData: {
                     username: newUser.username,
                     email: newUser.email,
-                    userType: newUser.userType
+                    userType: newUser.userType,
+                    token: token
                 } }
             }
         } catch (error) {
@@ -43,7 +44,8 @@ module.exports = {
                 userData: {
                         username: userExists.username,
                         email: userExists.email,
-                        userType: userExists.userType
+                        userType: userExists.userType,
+                        token: token
                     }
              }
         } catch (error) {

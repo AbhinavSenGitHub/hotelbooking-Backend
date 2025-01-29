@@ -7,15 +7,20 @@ const session = require("express-session")
 const passport = require("passport")
 const db = require("./config/db")
 const MongoStore = require("connect-mongo")
-
+const googleStrategy = require("passport-google-oauth20").Strategy
 // PORT
 const PORT = process.env.PORT || 8082
 
 // use
 const app = express()
 app.use(express.urlencoded({extended: true}))
-app.use(cors({origin: "*"}))
-
+// app.use(cors({origin: "*"}))
+app.use(cors({
+    origin: 'http://localhost:3000', // Allow requests from Google OAuth endpoint
+    methods: 'GET, POST, PUT, DELETE',
+    allowedHeaders: 'Content-Type, Authorization',
+    credentials: true // Allow credentials (e.g., cookies, HTTP authentication)
+  }));
 // middleware
 app.use(express())
 app.use(express.json())
@@ -28,7 +33,7 @@ app.use(session({
     cookie: {  
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds  
     httpOnly: true,  // for security, to prevent XSS attacks  
-    secure: false
+    secure: process.env.NODE_ENV === 'production',
   }  
 
 }))
@@ -37,6 +42,8 @@ app.use(passport.session())
 
 // router import
 
+//google auth
+const googleAuth = require("./auth/routes/userRouter")
 // user route
 const userRouter = require("./auth/routes/userRouter")
 
@@ -52,7 +59,7 @@ app.use("/", userRouter)
 app.use("/", createHotelRoute)
 app.use("/", roomRoute)
 app.use("/", customer)
-
+app.use("/", googleAuth)
 // listining to port
 app.listen(PORT, (error, res) => {
     if(error) {

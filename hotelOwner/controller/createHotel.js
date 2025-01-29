@@ -1,5 +1,6 @@
 const { cloudinary, uploadImageToCloudinary } = require("../../config/cloudinaryConfig")
 const hotelModel = require("../model/hotelModel")
+const roomModel = require("../../room/model/roomModel")
 const citiesModel = require("../model/citiesModel")
 const multer = require('multer');
 
@@ -22,12 +23,12 @@ module.exports = {
             console.log("imageUploadPromises url :- ", imageUploadPromises)
             let imageUrls = []
             try {
-                imageUrls = await Promise.all(imageUploadPromises);  
-                console.log("Uploaded Image URLs: ", imageUrls); 
+                imageUrls = await Promise.all(imageUploadPromises);
+                console.log("Uploaded Image URLs: ", imageUrls);
             } catch (error) {
                 console.error("Error uploading images: ", error);
             }
-            console.log(" Image URLs: ", imageUrls); 
+            console.log(" Image URLs: ", imageUrls);
 
             // Create the new hotel object
             const newHotel = new hotelModel({
@@ -49,32 +50,72 @@ module.exports = {
     },
 
     updateHotel: async (req, res) => {
-        console.log("update Hotel ")
-
+        console.log("update Hotel ", req.files)
+        console.log("update Hotel ", req.body)
+        const hotel_Id = req.params.hotelId
+        
         try {
-            const hotel_Id = req.params.hotelId
-            const owner_Id = req.user._id
 
-            const hotel = await hotelModel.findOne({ _id: hotel_Id, owner: owner_Id })
+            // delete the image from the cloud
+            if(req.body.deletedImages){
 
-            if (!hotel) {
-                return res.status(404).json({ status: 404, success: false, message: "Couldn't find the hotel" })
+                const urlToDelete = req.body.deletedImages.split(",")
+                for(const url of urlToDelete){
+                    const publicId = url.split("/").pop().split(".")[0];
+                    console.log("public Id ", publicId)
+                    try {
+                        const result = await cloudinary.uploader.destroy(publicId);
+                        const response =  await hotelModel.updateMany(
+                            { images: url},
+                            { $pull: { images: url } }
+                        )
+
+                        console.log("Delete result:", result)
+                        console.log("Delete response:", response)
+
+                    } catch (error) {
+                        console.error("Error deleting image:", error);
+                    }
+                }
             }
+            let existingImage = []
+            if(req.body.images){
+                existingImage = req.body.images.split(',')
+                console.log("", existingImage)
+            }
+            let imageUploadPromises = [];
+            if (req.files && req.files.length > 0) {
+                imageUploadPromises = req.files.map((file) => {
+                    console.log(file.buffer)
+                    return uploadImageToCloudinary(file.buffer);
+                })
+            }
+            console.log("imageUploadPromises url :- ", imageUploadPromises)
+            let imageUrls = []
+            try {
+                imageUrls = await Promise.all(imageUploadPromises);
+                console.log("Uploaded Image URLs: ", imageUrls);
+            } catch (error) {
+                console.error("Error uploading images: ", error);
+            }
+            console.log(" Image URLs: ", imageUrls);
+
 
             const updatedHotel = await hotelModel.findByIdAndUpdate(
                 hotel_Id,
                 {
                     hotelName: req.body.hotelName,
+                    hotelAddress: req.body.hotelAddress,
                     hotelDescription: req.body.hotelDescription,
                     city: req.body.city,
-                    state: req.body.state,
-                    country: req.body.country,
                     numberOfRooms: req.body.numberOfRooms,
-                    diningHall: req.body.diningHall,
-                    image: req.body.image,
-                    roomForFourMembers: req.body.roomForFourMembers,
-                    roomForTwoMembers: req.body.roomForTwoMembers,
-                    roomForOneMembers: req.body.roomForOneMembers
+                    //diningHall: req.body.diningHall,
+                    images: [...existingImage, ...imageUrls],
+                    pincode: req.body.pincode,
+                    numberOfRooms: req.body.numberOfRooms,
+                    ownerContact: req.body.ownerContact,
+                    //keyPoints: req.body.keyPoints,
+                    bookingContact: req.body.bookingContact,
                 },
                 { new: true }
             )
@@ -91,15 +132,10 @@ module.exports = {
     deleteHotel: async (req, res) => {
         try {
             const hotel_Id = req.params.hotelId
-            const owner_Id = req.user._id
-            const hotel = await hotelModel.findOne({ _id: hotel_Id, owner: owner_Id })
-
-            if (!hotel) {
-                return res.status(404).json({ status: 404, success: false, message: "Hotel Not Fount" })
-            }
-
-            await hotelModel.deleteOne({ _id: hotel_Id });
-
+            console.log("hotel_Id: ", hotel_Id)
+            // const owner_Id = req.user._id
+            const hotel = await hotelModel.findOneAndDelete({ _id: hotel_Id })
+            await roomModel.deleteMany({ roomHotel_Id: hotel_Id})
             return res.status(200).json({ status: 200, success: true, message: "Hotel deleted successfully" })
         } catch (error) {
             console.error("Error in deleting the hotel", error)
@@ -168,16 +204,44 @@ module.exports = {
     getAllLocation: async (req, res) => {
         try {
             const response = await citiesModel.find()
-            if(!response){
+            if (!response) {
                 console.log("cities response", response)
                 return res.status(404).json({ status: 404, success: false, message: "No city found" })
             }
 
-            return res.status(200).json({ status: 200, success: true, data: response})
+            return res.status(200).json({ status: 200, success: true, data: response })
 
 
-        }catch (error) {
+        } catch (error) {
 
         }
+    },
+
+    searchOwnerHotel: async (req, res) => {
+        try {
+            const owner_id = req.user._id
+            console.log("owner_id", owner_id)
+            console.log("owner_id", req.user)
+            // console.log("owner_id: ", owner_id)
+            const filter = { owner: owner_id }
+            const { query } = req.query
+            // console.log("query: ", query)
+            if (query) {
+
+                filter.hotelName = { $regex: query, $options: "i" };
+            }
+            const hotels = await hotelModel.find(filter)
+
+            //console.log("hotel searched:- ", hotels)
+            return res.status(200).json({
+                count: hotels.length,
+                response: hotels,
+            })
+        } catch (error) {
+            console.error("Error in getting hotel")
+            res.status(500).json({ status: 500, messsage: "Internal server error " + error.message })
+        }
     }
+
+    
 }

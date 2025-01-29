@@ -1,14 +1,16 @@
 const roomModel = require("../model/roomModel")
 const { cloudinary, uploadImageToCloudinary } = require("../../config/cloudinaryConfig")
 const { v4: uuidv4 } = require('uuid');
+const { ObjectId } = require('mongodb');
 const multer = require('multer');
+const { default: mongoose } = require("mongoose");
 module.exports = {
     createRoom: async (req, res) => {
 
         try {
             const { keyPoints, ...otherRoomData } = req.body;
 
-            console.log("room datqa ", keyPoints, otherRoomData);
+            // console.log("room datqa ", keyPoints, otherRoomData);
             console.log(req.files);
 
             let imageUploadPromises = [];
@@ -38,7 +40,7 @@ module.exports = {
             console.log("newRoom data", newRoom)
             await newRoom.save()
 
-            res.status(200).json({ success: true, message: "Room added to your hotel successfully", severity: "success"});
+            res.status(200).json({ success: true, message: "Room added to your hotel successfully", severity: "success" });
         } catch (error) {
             console.error('Error adding room:', error);
             res.status(500).json({ success: false, message: "Error in adding room to your hotel.", severity: "error" });
@@ -61,7 +63,54 @@ module.exports = {
 
     updateRoom: async (req, res) => {
         try {
+
+            console.log("Request Body:", req.body); // Form fields
+            console.log("Uploaded Files:", req.files); // Uploaded files
             const roomId = req.params.roomId; // Ensure this matches how you define your route  
+
+            // delete the image from the cloud
+            if (req.body.deletedImages) {
+
+                const urlToDelete = req.body.deletedImages.split(",")
+                for (const url of urlToDelete) {
+                    const publicId = url.split("/").pop().split(".")[0];
+                    console.log("public Id ", publicId)
+                    try {
+                        const result = await cloudinary.uploader.destroy(publicId);
+                        const response = await roomModel.updateMany(
+                            { roomImages: url },
+                            { $pull: { roomImages: url } }
+                        )
+
+                        console.log("Delete result:", result)
+                        console.log("Delete response:", response)
+
+                    } catch (error) {
+                        console.error("Error deleting image:", error);
+                    }
+                }
+            }
+            let existingImage = []
+            if (req.body.roomImages) {
+                existingImage = req.body.roomImages.split(',')
+                console.log("", existingImage)
+            }
+            let imageUploadPromises = [];
+            if (req.files && req.files.length > 0) {
+                imageUploadPromises = req.files.map((file) => {
+                    console.log(file.buffer)
+                    return uploadImageToCloudinary(file.buffer);
+                })
+            }
+            console.log("imageUploadPromises url :- ", imageUploadPromises)
+            let imageUrls = []
+            try {
+                imageUrls = await Promise.all(imageUploadPromises);
+                console.log("Uploaded Image URLs: ", imageUrls);
+            } catch (error) {
+                console.error("Error uploading images: ", error);
+            }
+            console.log(" Image URLs: ", imageUrls);
 
             const updatedRoomData = await roomModel.findByIdAndUpdate(
                 roomId, // The actual room ID  
@@ -72,7 +121,7 @@ module.exports = {
                     state: req.body.state,
                     country: req.body.country,
                     fullAddress: req.body.fullAddress,
-                    roomImages: req.body.roomImages || [], // Default to empty array if not provided  
+                    roomImages: [...existingImage, ...imageUrls] || [], // Default to empty array if not provided  
                     floorNumber: req.body.floorNumber,
                     numberOfBed: req.body.numberOfBed,
                     price: req.body.price,
@@ -80,7 +129,7 @@ module.exports = {
                     bathRoom: req.body.bathRoom,
                     description: req.body.description,
                     amenities: req.body.amenities || [], // Default to empty array if not provided  
-                    availabilityDates: req.body.availabilityDates || [] // Default to empty array if not provided  
+                    availabilityDates: req.body.availabilityDates  // Default to empty array if not provided  
                 },
                 { new: true } // Return the updated document  
             );
@@ -115,7 +164,7 @@ module.exports = {
     },
 
     getAllRoom: async (req, res) => {
-        
+
         try {
             const rooms = await roomModel.aggregate([
                 {
@@ -144,13 +193,56 @@ module.exports = {
                         'hotelDetails.hotelAddress': 1,
                         'hotelDetails.city': 1,
                         'hotelDetails.bookingContact': 1,
+                        'hotelDetails._id': 1,
                     }
                 }
             ])
-            console.log("rooms:- ", rooms)
+            // console.log("rooms:- ", rooms)
             res.status(200).json({ rooms });
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
+    },
+
+    searchRoomByHotelId: async (req, res) => {
+        const { hotelId, selectedField, selectedValue } = req.query;
+
+        console.log("search fields", selectedValue, selectedField, hotelId);
+
+        try {
+            // Construct dynamic filter
+            const objectId = new mongoose.Types.ObjectId(hotelId);
+            const roomNumber = 21
+
+            console.log("id, roomNumber", objectId, roomNumber)
+
+            let rooms = ""
+            if (selectedField === 'floorNumber') {
+
+                rooms = await roomModel.find({
+                    roomHotel_Id: objectId,
+                    floorNumber: selectedValue
+                })
+            } else if (selectedField === 'floorNumber') {
+
+                rooms = await roomModel.find({
+                    roomHotel_Id: objectId,
+                    roomNumber: selectedValue
+                })
+            }
+
+            console.log("rooms: ", rooms)
+            return res.status(200).json({
+                status: 200,
+                data: rooms,
+            });
+        } catch (error) {
+            console.error("Error: ", error);
+            return res.status(500).json({
+                status: 500,
+                message: "Internal Server Error: " + error.message,
+            });
+        }
     }
+
 }
