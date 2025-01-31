@@ -8,6 +8,7 @@ const passport = require("passport")
 const db = require("./config/db")
 const MongoStore = require("connect-mongo")
 const googleStrategy = require("passport-google-oauth20").Strategy
+const path = require('path');
 // PORT
 const PORT = process.env.PORT || 8082
 
@@ -23,6 +24,7 @@ app.use(cors({
   }));
 // middleware
 app.use(express())
+app.use(express.static(path.resolve(__dirname, 'build')))
 app.use(express.json())
 app.use(cookieParser())
 app.use(session({
