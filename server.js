@@ -17,7 +17,7 @@ const app = express()
 app.use(express.urlencoded({extended: true}))
 // app.use(cors({origin: "*"}))
 app.use(cors({
-    origin: 'http://localhost:3000', // Allow requests from Google OAuth endpoint
+    origin: 'https://heavenstay-plum.vercel.app', // Allow requests from Google OAuth endpoint
     methods: 'GET, POST, PUT, DELETE',
     allowedHeaders: 'Content-Type, Authorization',
     credentials: true // Allow credentials (e.g., cookies, HTTP authentication)

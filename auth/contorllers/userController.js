@@ -180,7 +180,7 @@ module.exports = {
                 googleId: user.googleId,
                 userType: user.userType,
             });
-            res.redirect("http://localhost:3000/display-rooms");  // Adjust this as per your frontend route
+            res.redirect("https://heavenstay-plum.vercel.app/display-rooms");  // Adjust this as per your frontend route
         } catch (error) {
             console.error("Error in Google Auth Callback:", error);
             res.status(500).json({ message: "Something went wrong." });
