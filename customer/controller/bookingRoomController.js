@@ -8,32 +8,116 @@ const Stripe = require("stripe");
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // Replace with your Stripe secret key
 
 module.exports = {
-    bookingRoom: async (req, res) => {
-        try {
+    // bookingRoom: async (req, res) => {
+    //     try {
 
+    //         const formatDate = (date) => {
+    //             const d = new Date(date);
+    //             const day = String(d.getDate()).padStart(2, '0');
+    //             const month = String(d.getMonth() + 1).padStart(2, '0');  // Months are 0-indexed
+    //             const year = d.getFullYear();
+    //             return `${year}-${month}-${day}`;
+    //         };
+    //         const getNextAvailableDate = (date, daysToAdd = 1) => {
+    //             const d = new Date(date);
+    //             d.setDate(d.getDate() + daysToAdd); // Add the number of days to the current date  
+    //             return formatDate(d); // Return the formatted date  
+    //         };
+    //         console.log("booking data ", req.body)
+    //         const formattedCheckinDate = formatDate(req.body.checkinDate);
+    //         const formattedCheckoutDate = formatDate(req.body.checkoutDate);
+
+    //         const today = new Date()
+    //         const formattedBookingDate = today.toISOString().split('T')[0];
+    //         const nextAvailableDate = getNextAvailableDate(req.body.checkoutDate);
+
+    //         console.log("nextAvailableDate", nextAvailableDate)
+
+    //         console.log("booking room", req.user._id)
+    //         const newBooking = new bookingRoomModel({
+    //             accountOwnerId: req.user._id,
+    //             hotelId: req.body.hotelId,
+    //             roomId: new mongoose.Types.ObjectId(req.body.roomId),
+    //             checkinDate: formattedCheckinDate,
+    //             checkoutDate: formattedCheckoutDate,
+    //             checkinTime: req.body.checkinTime,
+    //             checkoutTime: req.body.checkoutTime,
+    //             numberOfGuests: req.body.numberOfGuests,
+    //             bookingName: req.body.bookingName,
+    //             bookingEmail: req.body.bookingEmail,
+    //             bookingContact: req.body.bookingContact,
+    //             amount: req.body.amount,
+    //             paymentStatus: req.body.paymentStatus,
+    //             bookingDate: formattedBookingDate,
+    //         })
+
+
+    //         await newBooking.save()
+
+    //         const updatedRoom = await roomModel.findOneAndUpdate(
+    //             { _id: new mongoose.Types.ObjectId(req.body.roomId) },  // Query to match the room
+    //             {
+    //                 $set: {
+    //                     roomOwner_Id: req.user,
+    //                     availabilityDates: nextAvailableDate,
+    //                     isBooked: true  // Update isBooked field to true
+    //                 }
+    //             },
+    //             { new: true }  // Optionally, return the updated document
+    //         );
+
+    //         res.status(201).json({
+    //             status: 201,
+    //             success: true,
+    //             message: 'Room booked successfully'
+    //         })
+    //     } catch (error) {
+    //         console.error(error)
+    //         return res.status(500).json({ status: 500, success: false, message: "Internal Server Error" })
+    //     }
+    // },
+
+    bookingRooms: async (req, res) => {
+        try {
             const formatDate = (date) => {
                 const d = new Date(date);
                 const day = String(d.getDate()).padStart(2, '0');
-                const month = String(d.getMonth() + 1).padStart(2, '0');  // Months are 0-indexed
+                const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
                 const year = d.getFullYear();
                 return `${year}-${month}-${day}`;
             };
-            const getNextAvailableDate = (date, daysToAdd = 1) => {
-                const d = new Date(date);
-                d.setDate(d.getDate() + daysToAdd); // Add the number of days to the current date  
-                return formatDate(d); // Return the formatted date  
-            };
-            console.log("booking data ", req.body)
+    
             const formattedCheckinDate = formatDate(req.body.checkinDate);
             const formattedCheckoutDate = formatDate(req.body.checkoutDate);
-
-            const today = new Date()
-            const formattedBookingDate = today.toISOString().split('T')[0];
-            const nextAvailableDate = getNextAvailableDate(req.body.checkoutDate);
-
-            console.log("nextAvailableDate", nextAvailableDate)
-
-            console.log("booking room", req.user._id)
+            const formattedBookingDate = formatDate(new Date()); // Current date for bookingDate
+    
+            console.log("data of booking", req.body);
+    
+            // Create Stripe checkout session
+            const session = await stripe.checkout.sessions.create({
+                payment_method_types: ["card"],
+                mode: "payment",
+                line_items: [
+                    {
+                        price_data: {
+                            currency: "usd",
+                            product_data: {
+                                name: "Hotel Booking",
+                                description: `Booking from ${formattedCheckinDate} to ${formattedCheckoutDate}`,
+                            },
+                            unit_amount: req.body.amount * 100, // Convert to cents
+                        },
+                        quantity: 1,
+                    },
+                ],
+                customer_email: req.body.email,
+                success_url: "https://heavenstay-plum.vercel.app/",
+                cancel_url: "https://heavenstay-plum.vercel.app/",
+            });
+    
+            console.log("payments session", session);
+    
+            // Save booking details after creating Stripe session
             const newBooking = new bookingRoomModel({
                 accountOwnerId: req.user._id,
                 hotelId: req.body.hotelId,
@@ -49,73 +133,18 @@ module.exports = {
                 amount: req.body.amount,
                 paymentStatus: req.body.paymentStatus,
                 bookingDate: formattedBookingDate,
-            })
-
-
-            await newBooking.save()
-
-            const updatedRoom = await roomModel.findOneAndUpdate(
-                { _id: new mongoose.Types.ObjectId(req.body.roomId) },  // Query to match the room
-                {
-                    $set: {
-                        roomOwner_Id: req.user,
-                        availabilityDates: nextAvailableDate,
-                        isBooked: true  // Update isBooked field to true
-                    }
-                },
-                { new: true }  // Optionally, return the updated document
-            );
-
-            res.status(201).json({
-                status: 201,
-                success: true,
-                message: 'Room booked successfully'
-            })
+            });
+    
+            await newBooking.save(); // Save booking details in the database
+    
+            res.json({ url: session.url, bookingData: req.body, bookingId: newBooking._id });
+    
         } catch (error) {
-            console.error(error)
-            return res.status(500).json({ status: 500, success: false, message: "Internal Server Error" })
+            console.error("Error creating Stripe session or saving booking:", error);
+            res.status(500).json({ error: "Failed to process booking" });
         }
     },
-
-    bookingRooms: async (req, res) => {
-        try {
-            const formatDate = (date) => {
-                const d = new Date(date);
-                const day = String(d.getDate()).padStart(2, '0');
-                const month = String(d.getMonth() + 1).padStart(2, '0');  // Months are 0-indexed
-                const year = d.getFullYear();
-                return `${year}-${month}-${day}`;
-            };
-            const formattedCheckinDate = formatDate(req.body.checkinDate);
-            const formattedCheckoutDate = formatDate(req.body.checkoutDate);
-
-            const session = await stripe.checkout.sessions.create({
-              payment_method_types: ["card"],
-              mode: "payment",
-              line_items: [
-                {
-                  price_data: {
-                    currency: "usd",
-                    product_data: {
-                      name: "Hotel Booking",
-                      description: `Booking from ${formattedCheckinDate} to ${formattedCheckoutDate}`,
-                    },
-                    unit_amount: req.body.amount * 100, // Convert to cents
-                  },
-                  quantity: 1,
-                },
-              ],
-              customer_email: req.body.email,
-              success_url: "https://heavenstay-plum.vercel.app/success?session_id={CHECKOUT_SESSION_ID}",
-              cancel_url: "https://heavenstay-plum.vercel.app/cancel",
-            });
-        
-            res.json({ url: session.url, bookingData: req.body });
-          } catch (error) {
-            console.error("Error creating Stripe session:", error);
-            res.status(500).json({ error: "Failed to create Stripe session" });
-          }
-    },
+    
 
     finalizeBooking: async (req, res) => {
         const { sessionId, bookingData } = req.body;
@@ -214,6 +243,8 @@ module.exports = {
                             'hotelDetails.bookingContact': 1,
                             'hotelDetails.hotelDescription': 1,
                             'hotelDetails.keyPoints': 1,
+                            'hotelDetails.pincode': 1,
+                            'hotelDetails.images': 1,
                             'roomDetails.roomNumber': 1,   // Get room details
                             'roomDetails.roomImages': 1,
                             'roomDetails.keyPoints': 1,

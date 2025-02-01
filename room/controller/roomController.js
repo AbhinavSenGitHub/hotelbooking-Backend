@@ -192,6 +192,9 @@ module.exports = {
                         'hotelDetails.hotelName': 1, // Get hotel name
                         'hotelDetails.hotelAddress': 1,
                         'hotelDetails.city': 1,
+                        'hotelDetails.pincode': 1,
+                        'hotelDetails.keyPoints': 1,
+                        'hotelDetails.images': 1,
                         'hotelDetails.bookingContact': 1,
                         'hotelDetails._id': 1,
                     }

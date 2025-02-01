@@ -4,7 +4,7 @@ const { bookingRoom, fetchAllBookingByCustomerId, updateByBookingId, cancelBooki
 
 const router = require("express").Router()
 
-router.post("/customer/booking", mixedAuth, bookingRoom)
+// router.post("/customer/booking", mixedAuth, bookingRoom)
 
 router.post("/create-checkout-session", mixedAuth, bookingRooms)
 router.post("/finalize-booking", mixedAuth, finalizeBooking)
