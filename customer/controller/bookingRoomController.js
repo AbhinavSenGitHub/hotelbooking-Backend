@@ -225,7 +225,7 @@ module.exports = {
                     },
                     {
                         $unwind: '$roomDetails' // Flatten the roomDetails array
-                    },
+                    }, 
                     {
                         $project: {
                             _id: 1,
